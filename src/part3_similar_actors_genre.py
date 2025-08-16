@@ -34,34 +34,55 @@ from sklearn.metrics.pairwise import cosine_distances
 # Write your code below
 
 # Paths 
-data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
-input_path = os.path.join(data_dir, 'imdb_movies_2000to2022.prolific.json')
+base_dir = os.path.dirname(os.path.dirname(__file__))
+data_dir = os.path.join(base_dir, 'data')
+
+# Load most recent JSON 
+json_files = [f for f in os.listdir(data_dir) if f.startswith("imdb_movies") and f.endswith(".json")]
+if not json_files:
+    raise FileNotFoundError("No imdb_movies_*.json file found in /data")
+
+json_files.sort()
+input_path = os.path.join(data_dir, json_files[-1])
+
+print(f"Loading data from {input_path} ...")
+
+movies = []
+with open(input_path, 'r', encoding='utf-8') as f:
+    first_char = f.read(1)
+    f.seek(0)
+    if first_char == "[":
+        # File is a full JSON array
+        movies = json.load(f)
+    else:
+        # File is newline-delimited JSON
+        for line in f:
+            if line.strip():
+                movies.append(json.loads(line))
+
+print(f"Loaded {len(movies)} movies.")
 
 # Build actor-genre matrix
 actor_genre_counts = {}  # {actor_id: {'name': actor_name, 'genre_counts': {genre: count}}}
 all_genres = set()
 
-with open(input_path, 'r', encoding='utf-8') as f:
-    for line in f:
-        movie = json.loads(line)
+for movie in movies:
+    if 'actors' not in movie or 'genres' not in movie:
+        continue
 
-        # Skip movies without required fields
-        if 'actors' not in movie or 'genres' not in movie:
-            continue
+    genres = movie['genres']
+    for genre in genres:
+        all_genres.add(genre)
 
-        genres = movie['genres']
+    for actor_id, actor_name in movie['actors']:
+        if actor_id not in actor_genre_counts:
+            actor_genre_counts[actor_id] = {
+                'name': actor_name,
+                'genre_counts': {}
+            }
         for genre in genres:
-            all_genres.add(genre)
-
-        for actor_id, actor_name in movie['actors']:
-            if actor_id not in actor_genre_counts:
-                actor_genre_counts[actor_id] = {
-                    'name': actor_name,
-                    'genre_counts': {}
-                }
-            for genre in genres:
-                actor_genre_counts[actor_id]['genre_counts'][genre] = \
-                    actor_genre_counts[actor_id]['genre_counts'].get(genre, 0) + 1
+            actor_genre_counts[actor_id]['genre_counts'][genre] = \
+                actor_genre_counts[actor_id]['genre_counts'].get(genre, 0) + 1
                     
 # Create dataframe
 genre_list = sorted(list(all_genres))

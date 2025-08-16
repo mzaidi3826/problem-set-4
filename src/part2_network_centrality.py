@@ -19,13 +19,25 @@ from datetime import datetime
 g = nx.Graph()
 
 # Paths
-data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
-input_path = os.path.join(data_dir, 'imdb_movies_2000to2022.prolific.json')
+base_dir = os.path.dirname(os.path.dirname(__file__))
+data_dir = os.path.join(base_dir, 'data')
+
+# Find latest JSON file in /data
+json_files = [f for f in os.listdir(data_dir) if f.endswith(".json")]
+if not json_files:
+    raise FileNotFoundError("No JSON dataset found in /data. Run Part 1 ETL first.")
+
+latest_json = max(
+    [os.path.join(data_dir, f) for f in json_files],
+    key=os.path.getctime
+)
+
+print(f"Using dataset: {latest_json}")
 
 # Set up your dataframe(s) -> the df that's output to a CSV should include at least the columns 'left_actor_name', '<->', 'right_actor_name'
 actor_pairs = []
 
-with open(input_path, 'r', encoding='utf-8') as in_file:
+with open(latest_json, "r", encoding="utf-8") as in_file:
     # Don't forget to comment your code
     for line in in_file:
         # Don't forget to include docstrings for all functions

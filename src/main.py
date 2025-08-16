@@ -2,9 +2,9 @@
 You will run this problem set from main.py, so set things up accordingly
 '''
 
-import part1_etl as etl
-import part2_network_centrality as nc
-import part3_similar_actors_genre as sag
+from part1_etl import etl as etl
+from part2_network_centrality import nc as nc
+from part3_similar_actors_genre import sag as sag
 
 # Call functions / instanciate objects from the .py files
 def main():

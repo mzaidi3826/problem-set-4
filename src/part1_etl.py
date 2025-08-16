@@ -13,39 +13,41 @@ import json
 import requests
 from datetime import datetime 
 
-# Load datasets and save to '/data'
-url = "https://github.com/cbuntain/umd.inst414/blob/main/data/imdb_movies_2000to2022.prolific.json?raw=true"
+def etl():
 
-# Extract 
-print("Downloading dataset...")
-response = requests.get(url, stream=True)
-response.raise_for_status()
+    # Load datasets and save to '/data'
+    url = "https://github.com/cbuntain/umd.inst414/blob/main/data/imdb_movies_2000to2022.prolific.json?raw=true"
 
-movies_json = []
-for line in response.iter_lines():
-    if line:  # skip empty lines
-        movies_json.append(json.loads(line.decode("utf-8")))
+    # Extract 
+    print("Downloading dataset...")
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
 
-print(f"Loaded {len(movies_json)} movies")
+    movies_json = []
+    for line in response.iter_lines():
+        if line:  # skip empty lines
+            movies_json.append(json.loads(line.decode("utf-8")))
 
-# Transform
-df = pd.DataFrame(movies_json)
+    print(f"Loaded {len(movies_json)} movies\n")
 
-# Make sure to always save to root/data
-base_dir = os.path.dirname(os.path.dirname(__file__))  # go up from src/
-data_dir = os.path.join(base_dir, "data")
-os.makedirs(data_dir, exist_ok=True)
+    # Transform
+    df = pd.DataFrame(movies_json)
 
-# Load (save to ./data with timestamp)
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-csv_out = os.path.join(data_dir, f"imdb_movies_{timestamp}.csv")
-json_out = os.path.join(data_dir, f"imdb_movies_{timestamp}.json")
+    # Make sure to always save to root/data
+    base_dir = os.path.dirname(os.path.dirname(__file__))  # go up from src/
+    data_dir = os.path.join(base_dir, "data")
+    os.makedirs(data_dir, exist_ok=True)
 
-df.to_csv(csv_out, index=False)
+    # Load (save to ./data with timestamp)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_out = os.path.join(data_dir, f"imdb_movies_{timestamp}.csv")
+    json_out = os.path.join(data_dir, f"imdb_movies_{timestamp}.json")
 
-with open(json_out, "w", encoding="utf-8") as out_file:
-    for movie in movies_json:
-        out_file.write(json.dumps(movie) + "\n")
+    df.to_csv(csv_out, index=False)
 
-print(f"Saved dataset to:\n  {csv_out}\n  {json_out}")
-print(df.head())
+    with open(json_out, "w", encoding="utf-8") as out_file:
+        for movie in movies_json:
+            out_file.write(json.dumps(movie) + "\n")
+
+    print(f"Saved dataset to:\n  {csv_out}\n  {json_out}\n")
+    print(df.head())
